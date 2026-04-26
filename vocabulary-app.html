@@ -1,0 +1,1111 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>単語帳アプリ</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --white:#fff;--bg:#f7f9fc;--surface:#fff;
+  --blue-deep:#1a3a5c;--blue:#1e5fa8;--blue-mid:#2d7dd2;
+  --blue-light:#e8f1fb;--blue-pale:#f0f6ff;
+  --text:#1a2535;--text-sub:#5a6d84;--border:#dce8f5;
+  --success:#1a7a4a;--danger:#c0392b;
+  --shadow:0 2px 12px rgba(30,95,168,0.08);
+  --radius:12px;--radius-sm:8px;
+}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.app{max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;background:var(--bg)}
+/* TAB BAR */
+.tab-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;display:flex;background:var(--white);border-top:1px solid var(--border);z-index:100;box-shadow:0 -2px 12px rgba(30,95,168,0.07)}
+.tab-btn{flex:1;padding:10px 4px 6px;border:none;background:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--text-sub);font-size:10px;font-family:inherit;transition:color .2s}
+.tab-btn.active{color:var(--blue)}
+.tab-btn svg{width:22px;height:22px}
+.tab-dot{width:4px;height:4px;border-radius:50%;background:var(--blue);opacity:0;transition:opacity .2s}
+.tab-btn.active .tab-dot{opacity:1}
+/* CONTENT */
+.content{flex:1;padding:20px 16px 80px;overflow-y:auto}
+.page{display:none}.page.active{display:block}
+.page-header{margin-bottom:20px}
+.page-title{font-family:'DM Serif Display',serif;font-size:26px;color:var(--blue-deep);letter-spacing:-.5px}
+.page-sub{font-size:12px;color:var(--text-sub);margin-top:2px}
+/* CARD */
+.card{background:var(--surface);border-radius:var(--radius);padding:16px;margin-bottom:12px;box-shadow:var(--shadow);border:1px solid var(--border)}
+.card-title{font-size:13px;font-weight:700;color:var(--blue);margin-bottom:10px;letter-spacing:.3px;display:flex;justify-content:space-between;align-items:center}
+/* FORM */
+.form-row{margin-bottom:12px}
+.form-label{font-size:11px;font-weight:500;color:var(--text-sub);margin-bottom:4px;display:block}
+.form-input,.form-select{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:inherit;font-size:14px;color:var(--text);background:var(--white);outline:none;transition:border-color .2s}
+.form-input:focus,.form-select:focus{border-color:var(--blue-mid)}
+.form-row-inline{display:flex;gap:8px}
+.form-row-inline>.form-row{flex:1;margin-bottom:0}
+/* BUTTONS */
+.btn{padding:11px 20px;border-radius:var(--radius-sm);border:none;font-family:inherit;font-size:14px;font-weight:500;cursor:pointer;transition:all .15s;display:inline-flex;align-items:center;gap:6px;text-decoration:none}
+.btn-primary{background:var(--blue);color:#fff}.btn-primary:hover{background:var(--blue-deep)}
+.btn-secondary{background:var(--blue-light);color:var(--blue);border:1.5px solid var(--border)}.btn-secondary:hover{background:var(--border)}
+.btn-danger{background:#fef2f2;color:var(--danger);border:1.5px solid #fecaca}
+.btn-full{width:100%;justify-content:center}
+.btn-sm{padding:7px 14px;font-size:12px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+/* CHIPS */
+.chip-group{display:flex;flex-wrap:wrap;gap:6px}
+.chip{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:500;border:1.5px solid var(--border);background:var(--white);cursor:pointer;color:var(--text-sub);transition:all .15s;display:inline-flex;align-items:center;gap:5px;user-select:none}
+.chip.selected{background:var(--blue);color:#fff;border-color:var(--blue)}
+.chip-del{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:rgba(255,255,255,0.25);cursor:pointer;flex-shrink:0;transition:background .15s;margin-left:2px;font-size:10px;line-height:1}
+.chip-del:hover{background:rgba(255,255,255,0.4)}
+/* SUBJECT TABS (inside input page) */
+.subj-tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:14px}
+.subj-tab{padding:8px 14px;font-size:13px;font-weight:500;color:var(--text-sub);cursor:pointer;border:none;background:none;font-family:inherit;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;white-space:nowrap}
+.subj-tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+/* TAG PANEL */
+.tag-panel{background:var(--blue-pale);border-radius:8px;padding:10px;margin-bottom:8px;border:1px solid var(--border)}
+.tag-input-row{display:flex;gap:6px;margin-top:8px}
+.tag-input-row .form-input{flex:1;padding:7px 10px;font-size:13px}
+/* QUIZ */
+.quiz-progress{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.progress-bar{flex:1;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;background:var(--blue);border-radius:3px;transition:width .3s}
+.quiz-count{font-size:12px;color:var(--text-sub);white-space:nowrap}
+.timer-ring{position:relative;width:56px;height:56px;margin:0 auto 14px}
+.timer-ring svg{position:absolute;top:0;left:0;transform:rotate(-90deg)}
+.ring-bg{fill:none;stroke:var(--border);stroke-width:4}
+.ring-fill{fill:none;stroke:var(--blue);stroke-width:4;stroke-linecap:round;transition:stroke-dashoffset .1s linear,stroke .3s}
+.timer-text{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:var(--blue-deep)}
+.quiz-card{background:var(--surface);border-radius:16px;padding:24px 20px;text-align:center;border:1.5px solid var(--border);box-shadow:var(--shadow);margin-bottom:14px}
+.quiz-mode-badge{display:inline-block;font-size:10px;font-weight:700;padding:3px 10px;border-radius:20px;background:var(--blue-light);color:var(--blue);margin-bottom:12px}
+.quiz-question{font-size:28px;font-weight:700;color:var(--blue-deep);line-height:1.4}
+.choices{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
+.choice-btn{padding:13px 16px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--white);font-family:inherit;font-size:14px;color:var(--text);cursor:pointer;text-align:left;transition:all .15s;width:100%}
+.choice-btn:hover:not(:disabled){border-color:var(--blue-mid);background:var(--blue-pale)}
+.choice-btn.correct{background:#ecfdf5;border-color:var(--success);color:var(--success);font-weight:600}
+.choice-btn.wrong{background:#fef2f2;border-color:var(--danger);color:var(--danger)}
+.choice-btn:disabled{cursor:default}
+/* RESULT */
+.score-circle{width:120px;height:120px;border-radius:50%;border:6px solid var(--blue);margin:0 auto 16px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--blue-pale)}
+.score-num{font-size:36px;font-weight:700;color:var(--blue-deep);line-height:1}
+.score-label{font-size:11px;color:var(--text-sub)}
+.result-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px}
+/* DICT */
+.dict-item{background:var(--surface);border-radius:var(--radius-sm);padding:12px 14px;border:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start;box-shadow:var(--shadow);margin-bottom:8px}
+.dict-word{font-size:16px;font-weight:700;color:var(--blue-deep)}
+.dict-meaning{font-size:13px;color:var(--text-sub);margin-top:2px}
+.dict-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
+.dict-tag{font-size:10px;padding:2px 7px;border-radius:10px;background:var(--blue-light);color:var(--blue)}
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;display:none}
+.modal-overlay.open{display:flex}
+.modal{background:var(--white);border-radius:16px;padding:24px 20px;width:100%;max-width:360px;box-shadow:0 10px 40px rgba(0,0,0,.15)}
+.modal-title{font-size:16px;font-weight:700;color:var(--blue-deep);margin-bottom:8px}
+.modal-body{font-size:13px;color:var(--text-sub);margin-bottom:18px;line-height:1.7}
+.modal-actions{display:flex;flex-direction:column;gap:8px}
+/* TOAST */
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-10px);background:var(--blue-deep);color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:300;box-shadow:0 4px 16px rgba(0,0,0,.2);white-space:nowrap;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* MISC */
+.empty{text-align:center;padding:40px 20px;color:var(--text-sub);font-size:14px}
+.empty-icon{font-size:40px;margin-bottom:10px}
+.export-box{background:var(--blue-pale);border:1.5px dashed var(--blue-mid);border-radius:var(--radius);padding:16px;font-size:12px;color:var(--text-sub);margin-bottom:12px;word-break:break-all;max-height:120px;overflow-y:auto;font-family:monospace}
+.range-item{display:flex;align-items:center;gap:5px;padding:5px 10px;border:1.5px solid var(--border);border-radius:20px;cursor:pointer;font-size:12px;color:var(--text-sub);background:var(--white);transition:all .15s;user-select:none}
+.range-item.selected{border-color:var(--blue);background:var(--blue-light);color:var(--blue)}
+.range-item input{display:none}
+.sep{border:none;border-top:1px solid var(--border);margin:14px 0}
+.current-badge{font-size:11px;color:var(--text-sub);background:var(--blue-pale);padding:6px 10px;border-radius:6px;margin-bottom:10px;line-height:1.8}
+.search-wrap{position:relative;margin-bottom:12px}
+.search-wrap .form-input{padding-left:36px}
+.search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-sub);pointer-events:none}
+/* ANSWER FEEDBACK OVERLAY */
+.answer-overlay{position:fixed;inset:0;z-index:150;display:flex;align-items:center;justify-content:center;pointer-events:none;opacity:0;transition:opacity .15s}
+.answer-overlay.show{opacity:1}
+.answer-overlay.correct-bg{background:rgba(26,122,74,0.15)}
+.answer-overlay.wrong-bg{background:rgba(192,57,43,0.15)}
+.answer-mark-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;transform:scale(0.3);opacity:0;transition:transform .3s cubic-bezier(.17,.67,.35,1.5),opacity .2s}
+.answer-overlay.show .answer-mark-wrap{transform:scale(1);opacity:1}
+.answer-mark-svg{width:140px;height:140px;filter:drop-shadow(0 6px 20px rgba(0,0,0,0.15))}
+.answer-sub{font-size:18px;font-weight:700;text-align:center;max-width:280px;line-height:1.4}
+/* ANSWER INFO CARD */
+.answer-info{border-radius:var(--radius-sm);padding:12px 14px;margin-top:10px;border:1.5px solid;animation:fadeUp .25s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.answer-info.correct-card{background:#ecfdf5;border-color:#6ee7b7}
+.answer-info.wrong-card{background:#fef2f2;border-color:#fca5a5}
+.answer-info-label{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;margin-bottom:5px}
+.answer-info.correct-card .answer-info-label{color:#1a7a4a}
+.answer-info.wrong-card .answer-info-label{color:#c0392b}
+.answer-info-word{font-size:18px;font-weight:700;color:var(--blue-deep)}
+.answer-info-meaning{font-size:13px;color:var(--text-sub);margin-top:2px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="content">
+
+    <!-- ========== QUIZ PAGE ========== -->
+    <div id="page-quiz" class="page active">
+      <div class="page-header"><div class="page-title">Quiz</div><div class="page-sub">単語クイズを始めよう</div></div>
+      <div id="quiz-setup">
+        <div class="card">
+          <div class="card-title">出題範囲</div>
+          <div class="chip-group" id="scope-chips" style="margin-bottom:10px">
+            <div class="chip selected" data-scope="all" onclick="setScope('all')">全体</div>
+            <div class="chip" data-scope="subject" onclick="setScope('subject')">教科別</div>
+            <div class="chip" data-scope="tag" onclick="setScope('tag')">単元別</div>
+          </div>
+          <div id="scope-subject" style="display:none;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
+          <div id="scope-tag" style="display:none;flex-wrap:wrap;gap:6px;margin-bottom:8px"></div>
+          <div id="quiz-pool-count" style="font-size:11px;color:var(--blue);font-weight:600;margin-top:4px"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">問題数</div>
+          <div class="chip-group" id="count-chips">
+            <div class="chip" data-count="5" onclick="setCount(5)">5問</div>
+            <div class="chip selected" data-count="10" onclick="setCount(10)">10問</div>
+            <div class="chip" data-count="20" onclick="setCount(20)">20問</div>
+            <div class="chip" data-count="50" onclick="setCount(50)">50問</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">出題モード</div>
+          <div class="chip-group" id="mode-chips">
+            <div class="chip selected" data-mode="meaning_to_word" onclick="setMode('meaning_to_word')">意味 → 単語</div>
+            <div class="chip" data-mode="word_to_meaning" onclick="setMode('word_to_meaning')">単語 → 意味</div>
+            <div class="chip" data-mode="mixed" onclick="setMode('mixed')">両方混在</div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--text-sub);margin-bottom:10px;line-height:1.8">
+          ⏱ 2秒以内: 満点 ／ 〜5秒: ×0.9 ／ 〜10秒: ×0.8 ／ 10秒超: 0点
+        </div>
+        <button class="btn btn-primary btn-full" onclick="startQuiz()">クイズを開始する →</button>
+      </div>
+      <div id="quiz-playing" style="display:none">
+        <div class="quiz-progress">
+          <div class="progress-bar"><div class="progress-fill" id="q-progress"></div></div>
+          <div class="quiz-count" id="q-count"></div>
+        </div>
+        <div class="timer-ring">
+          <svg width="56" height="56" viewBox="0 0 56 56">
+            <circle class="ring-bg" cx="28" cy="28" r="24"/>
+            <circle class="ring-fill" id="ring-fill" cx="28" cy="28" r="24" stroke-dasharray="150.8" stroke-dashoffset="0"/>
+          </svg>
+          <div class="timer-text" id="timer-text">10</div>
+        </div>
+        <div class="quiz-card">
+          <div class="quiz-mode-badge" id="q-mode-badge"></div>
+          <div class="quiz-question" id="q-question"></div>
+        </div>
+        <div id="q-answer-info" style="display:none;margin-bottom:8px"></div>
+        <div class="choices" id="q-choices"></div>
+      </div>
+      <div id="quiz-result" style="display:none;text-align:center;padding:10px 0">
+        <div class="page-header"><div class="page-title">Result</div></div>
+        <div class="score-circle"><div class="score-num" id="r-score"></div><div class="score-label">点</div></div>
+        <div id="r-correct" style="font-size:13px;color:var(--text-sub);margin-bottom:16px"></div>
+        <button class="btn btn-primary btn-full" style="margin-bottom:16px" onclick="resetQuiz()">もう一度</button>
+        <div id="r-list" style="text-align:left"></div>
+      </div>
+    </div>
+
+    <!-- ========== INPUT PAGE ========== -->
+    <div id="page-input" class="page">
+      <div class="page-header"><div class="page-title">Input</div><div class="page-sub">単語を登録する</div></div>
+
+      <!-- Subject selection & management -->
+      <div class="card">
+        <div class="card-title">
+          教科
+          <button class="btn btn-secondary btn-sm" style="padding:3px 9px;font-size:11px;gap:4px" onclick="toggleSubjectEdit()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            編集
+          </button>
+        </div>
+        <div id="subject-edit-panel" class="tag-panel" style="display:none">
+          <div class="chip-group" id="subject-edit-chips" style="margin-bottom:8px"></div>
+          <div class="tag-input-row">
+            <input class="form-input" id="subject-add-input" placeholder="新しい教科を追加…" onkeydown="if(event.key==='Enter')addSubjectFromInput()">
+            <button class="btn btn-primary btn-sm" style="padding:7px 12px;flex-shrink:0" onclick="addSubjectFromInput()">＋</button>
+          </div>
+        </div>
+        <div class="chip-group" id="subject-chips-select"></div>
+      </div>
+
+      <!-- Tag settings per subject -->
+      <div class="card">
+        <div class="card-title">タグ設定 <span id="tag-subject-label" style="font-size:11px;font-weight:400;color:var(--text-sub)"></span></div>
+        <div class="subj-tabs" id="tag-subj-tabs"></div>
+
+        <!-- unit -->
+        <div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px">
+            <span class="form-label" style="margin:0">単元</span>
+            <button class="btn btn-secondary btn-sm" style="padding:3px 9px;font-size:11px" onclick="toggleTagEdit('unit')">編集</button>
+          </div>
+          <div id="tag-edit-unit" class="tag-panel" style="display:none">
+            <div class="chip-group" id="tag-edit-chips-unit" style="margin-bottom:8px"></div>
+            <div class="tag-input-row">
+              <input class="form-input" id="tag-add-unit" placeholder="新しい単元を追加…" onkeydown="if(event.key==='Enter')addTagOption('unit')">
+              <button class="btn btn-primary btn-sm" style="padding:7px 12px;flex-shrink:0" onclick="addTagOption('unit')">＋</button>
+            </div>
+          </div>
+          <div class="chip-group" id="tag-chips-unit"></div>
+        </div>
+      </div>
+
+      <!-- Word entry -->
+      <div class="card">
+        <div class="card-title">単語登録</div>
+        <div class="current-badge" id="inp-badge"></div>
+        <div class="form-row">
+          <label class="form-label">単語</label>
+          <input class="form-input" id="inp-word" placeholder="例: apple" onkeydown="if(event.key==='Enter')document.getElementById('inp-meaning').focus()">
+        </div>
+        <div class="form-row">
+          <label class="form-label">意味</label>
+          <input class="form-input" id="inp-meaning" placeholder="例: りんご" onkeydown="if(event.key==='Enter')registerWord()">
+        </div>
+        <button class="btn btn-primary btn-full" onclick="registerWord()">＋ 登録する</button>
+      </div>
+      <div style="font-size:12px;color:var(--text-sub);text-align:center;padding-bottom:8px">
+        登録済み: <span id="word-count" style="color:var(--blue);font-weight:700">0</span> 単語
+      </div>
+    </div>
+
+    <!-- ========== DICT PAGE ========== -->
+    <div id="page-dict" class="page">
+      <div class="page-header"><div class="page-title">Dictionary</div><div class="page-sub">単語一覧・検索</div></div>
+      <div class="chip-group" style="margin-bottom:12px">
+        <div class="chip selected" onclick="setDictMode('list')">一覧</div>
+        <div class="chip" onclick="setDictMode('word')">単語検索</div>
+        <div class="chip" onclick="setDictMode('meaning')">意味検索</div>
+      </div>
+      <div id="dict-search-wrap" class="search-wrap" style="display:none">
+        <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input class="form-input" id="dict-search-input" placeholder="検索…" oninput="renderDictList()">
+      </div>
+      <div id="dict-filter-wrap" style="margin-bottom:12px">
+        <div class="form-row-inline">
+          <div class="form-row">
+            <label class="form-label">教科</label>
+            <select class="form-select" id="dict-filter-subject" onchange="renderDictList()"></select>
+          </div>
+          <div class="form-row">
+            <label class="form-label">タグ</label>
+            <select class="form-select" id="dict-filter-tag" onchange="renderDictList()"></select>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--text-sub);margin-bottom:8px" id="dict-count"></div>
+      <div id="dict-list"></div>
+    </div>
+
+    <!-- ========== EXPORT PAGE ========== -->
+    <div id="page-export" class="page">
+      <div class="page-header"><div class="page-title">Export / Import</div><div class="page-sub">データを共有・移行する</div></div>
+      <div class="card">
+        <div class="card-title">📤 エクスポート</div>
+        <div style="font-size:13px;color:var(--text-sub);margin-bottom:12px;line-height:1.7">
+          登録済み <strong id="export-count" style="color:var(--blue)">0</strong> 件をJSONファイルとして保存します。
+        </div>
+        <div class="export-box" id="export-preview"></div>
+        <button class="btn btn-primary btn-full" onclick="exportData()">JSONファイルをダウンロード</button>
+      </div>
+      <div class="card">
+        <div class="card-title">📥 インポート（ファイル）</div>
+        <div style="font-size:13px;color:var(--text-sub);margin-bottom:12px;line-height:1.7">別端末でエクスポートしたJSONを読み込みます。重複IDはスキップされます。</div>
+        <input type="file" accept=".json" id="import-file-input" style="display:none" onchange="importFromFile(this)">
+        <button class="btn btn-secondary btn-full" onclick="document.getElementById('import-file-input').click()">
+          ファイルを選択して読み込む
+        </button>
+      </div>
+      <div class="card">
+        <div class="card-title">📋 インポート（テキスト貼り付け）</div>
+        <textarea class="form-input" id="import-text" rows="5" style="margin-bottom:10px;resize:vertical;font-family:monospace;font-size:12px" placeholder='[{"id":...,"word":"apple","meaning":"りんご",...}]'></textarea>
+        <button class="btn btn-secondary btn-full" onclick="importFromText()">テキストからインポート</button>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+
+  <!-- TAB BAR -->
+  <nav class="tab-bar">
+    <button class="tab-btn active" onclick="switchTab('quiz')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <span>クイズ</span><div class="tab-dot"></div>
+    </button>
+    <button class="tab-btn" onclick="switchTab('input')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+      <span>入力</span><div class="tab-dot"></div>
+    </button>
+    <button class="tab-btn" onclick="switchTab('dict')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <span>辞書</span><div class="tab-dot"></div>
+    </button>
+    <button class="tab-btn" onclick="switchTab('export')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <span>出力</span><div class="tab-dot"></div>
+    </button>
+  </nav>
+</div>
+
+<!-- ANSWER FEEDBACK OVERLAY -->
+<div class="answer-overlay" id="answer-overlay">
+  <div class="answer-mark-wrap" id="answer-mark-wrap">
+    <div id="answer-mark-svg-wrap"></div>
+    <div class="answer-sub" id="answer-sub"></div>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-dup">
+  <div class="modal">
+    <div class="modal-title">⚠️ すでに登録されています</div>
+    <div class="modal-body" id="modal-dup-body"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="dupAction('merge')">意味を統合する</button>
+      <button class="btn btn-secondary" onclick="dupAction('new')">統合せず新規登録</button>
+      <button class="btn btn-danger" onclick="closeModal('modal-dup')">キャンセル</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="modal-del">
+  <div class="modal">
+    <div class="modal-title">削除の確認</div>
+    <div class="modal-body" id="modal-del-body"></div>
+    <div class="modal-actions">
+      <button class="btn btn-danger" onclick="confirmDelete()">削除する</button>
+      <button class="btn btn-secondary" onclick="closeModal('modal-del')">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ===================== DATA =====================
+const STORAGE_KEY = 'vocab_app_v3';
+
+function defaultData() {
+  return {
+    words: [],
+    subjects: ['英語', '国語', '社会'],
+    subjectTags: {
+      '英語': { unit: ['レベル1', 'レベル2', 'レベル3'] },
+      '国語': { unit: ['第1章', '第2章', '第3章'] },
+      '社会': { unit: ['地理', '歴史', '公民'] },
+    }
+  };
+}
+
+let DB = loadDB();
+
+function loadDB() {
+  try {
+    const r = localStorage.getItem(STORAGE_KEY);
+    if (!r) return defaultData();
+    const d = JSON.parse(r);
+    const def = defaultData();
+    // ensure all subjects have subjectTags entry
+    if (!d.subjectTags) d.subjectTags = def.subjectTags;
+    (d.subjects || []).forEach(s => { if (!d.subjectTags[s]) d.subjectTags[s] = { unit: [] }; });
+    return { ...def, ...d };
+  } catch { return defaultData(); }
+}
+
+function saveDB() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
+}
+
+// ===================== INPUT STATE =====================
+let inp = {
+  subject: '',
+  tagSubject: '',
+  tags: { unit: '' }
+};
+
+function getSubjectTags(subj) {
+  if (!DB.subjectTags[subj]) DB.subjectTags[subj] = { unit: [] };
+  return DB.subjectTags[subj];
+}
+
+// ===================== TAB SWITCHING =====================
+function switchTab(tab) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + tab).classList.add('active');
+  document.querySelectorAll('.tab-btn')[['quiz','input','dict','export'].indexOf(tab)].classList.add('active');
+  if (tab === 'input') renderInputPage();
+  if (tab === 'dict') { renderDictFilters(); renderDictList(); }
+  if (tab === 'export') renderExportPage();
+  if (tab === 'quiz') renderQuizScopeOptions();
+}
+
+// ===================== TOAST =====================
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+// ===================== MODAL =====================
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ===================== INPUT PAGE =====================
+function renderInputPage() {
+  // ensure subject selected
+  if (!inp.subject || !DB.subjects.includes(inp.subject))
+    inp.subject = DB.subjects[0] || '';
+  if (!inp.tagSubject || !DB.subjects.includes(inp.tagSubject))
+    inp.tagSubject = inp.subject;
+
+  renderSubjectChips();
+  renderSubjectEditChips();
+  renderTagSubjectTabs();
+  renderAllTagChips();
+  updateInputBadge();
+  document.getElementById('word-count').textContent = DB.words.length;
+}
+
+function renderSubjectChips() {
+  const el = document.getElementById('subject-chips-select');
+  el.innerHTML = DB.subjects.map(s =>
+    `<div class="chip ${inp.subject === s ? 'selected' : ''}" onclick="selectInputSubject('${s}')">${s}</div>`
+  ).join('');
+}
+
+function renderSubjectEditChips() {
+  const el = document.getElementById('subject-edit-chips');
+  el.innerHTML = DB.subjects.map(s =>
+    `<div class="chip selected" style="font-size:11px">${s}<span class="chip-del" onclick="removeSubject('${s}')">✕</span></div>`
+  ).join('');
+}
+
+function selectInputSubject(s) {
+  inp.subject = s;
+  inp.tagSubject = s;
+  const st = getSubjectTags(s);
+  inp.tags.unit = st.unit[0] || '';
+  renderSubjectChips();
+  renderTagSubjectTabs();
+  renderAllTagChips();
+  updateInputBadge();
+}
+
+function toggleSubjectEdit() {
+  const p = document.getElementById('subject-edit-panel');
+  p.style.display = p.style.display === 'none' ? 'block' : 'none';
+}
+
+function addSubjectFromInput() {
+  const v = document.getElementById('subject-add-input').value.trim();
+  if (!v) return;
+  if (DB.subjects.includes(v)) { showToast('すでに存在します'); return; }
+  DB.subjects.push(v);
+  if (!DB.subjectTags[v]) DB.subjectTags[v] = { unit: [] };
+  saveDB();
+  document.getElementById('subject-add-input').value = '';
+  renderSubjectChips();
+  renderSubjectEditChips();
+  renderTagSubjectTabs();
+}
+
+function removeSubject(s) {
+  DB.subjects = DB.subjects.filter(x => x !== s);
+  if (inp.subject === s) inp.subject = DB.subjects[0] || '';
+  if (inp.tagSubject === s) inp.tagSubject = inp.subject;
+  saveDB();
+  renderSubjectChips();
+  renderSubjectEditChips();
+  renderTagSubjectTabs();
+  renderAllTagChips();
+  updateInputBadge();
+}
+
+// TAG SUBJECT TABS
+function renderTagSubjectTabs() {
+  const el = document.getElementById('tag-subj-tabs');
+  if (DB.subjects.length === 0) { el.innerHTML = '<span style="font-size:12px;color:var(--text-sub)">教科を追加してください</span>'; return; }
+  if (!DB.subjects.includes(inp.tagSubject)) inp.tagSubject = inp.subject || DB.subjects[0];
+  el.innerHTML = DB.subjects.map(s =>
+    `<button class="subj-tab ${inp.tagSubject === s ? 'active' : ''}" onclick="selectTagSubject('${s}')">${s}</button>`
+  ).join('');
+}
+
+function selectTagSubject(s) {
+  inp.tagSubject = s;
+  renderTagSubjectTabs();
+  renderAllTagChips();
+  document.getElementById('tag-edit-unit').style.display = 'none';
+}
+
+// TAG CHIPS
+function renderAllTagChips() {
+  renderTagChips('unit');
+  renderTagEditChips('unit');
+}
+
+function renderTagChips(key) {
+  const opts = getSubjectTags(inp.tagSubject)[key] || [];
+  // when viewing the active subject's tab, sync selection
+  if (inp.tagSubject === inp.subject) {
+    if (!opts.includes(inp.tags[key])) inp.tags[key] = opts[0] || '';
+  }
+  const el = document.getElementById('tag-chips-' + key);
+  el.innerHTML = opts.map(v => {
+    const isSelected = inp.tagSubject === inp.subject && inp.tags[key] === v;
+    return `<div class="chip ${isSelected ? 'selected' : ''}" onclick="selectTag('${key}','${escQ(v)}')">${v}</div>`;
+  }).join('') || '<span style="font-size:11px;color:var(--text-sub)">項目がありません</span>';
+}
+
+function escQ(s) { return s.replace(/'/g, "\\'"); }
+
+function renderTagEditChips(key) {
+  const opts = getSubjectTags(inp.tagSubject)[key] || [];
+  const el = document.getElementById('tag-edit-chips-' + key);
+  el.innerHTML = opts.map(v =>
+    `<div class="chip selected" style="font-size:11px">${v}<span class="chip-del" onclick="removeTagOption('${key}','${escQ(v)}')">✕</span></div>`
+  ).join('') || '<span style="font-size:11px;color:var(--text-sub)">（項目なし）</span>';
+}
+
+function selectTag(key, val) {
+  if (inp.tagSubject !== inp.subject) return; // only select on active subject's tab
+  inp.tags[key] = val;
+  renderTagChips(key);
+  updateInputBadge();
+}
+
+function toggleTagEdit(key) {
+  const el = document.getElementById('tag-edit-' + key);
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function addTagOption(key) {
+  const input = document.getElementById('tag-add-' + key);
+  const v = input.value.trim();
+  if (!v) return;
+  const opts = getSubjectTags(inp.tagSubject)[key];
+  if (opts.includes(v)) { showToast('すでに存在します'); return; }
+  opts.push(v);
+  saveDB();
+  input.value = '';
+  renderTagChips(key);
+  renderTagEditChips(key);
+}
+
+function removeTagOption(key, val) {
+  const tags = getSubjectTags(inp.tagSubject);
+  tags[key] = tags[key].filter(v => v !== val);
+  if (inp.tags[key] === val) inp.tags[key] = tags[key][0] || '';
+  saveDB();
+  renderTagChips(key);
+  renderTagEditChips(key);
+  updateInputBadge();
+}
+
+function updateInputBadge() {
+  document.getElementById('inp-badge').innerHTML =
+    `教科: <strong style="color:var(--blue)">${inp.subject || '—'}</strong>　` +
+    `単元: <strong style="color:var(--blue)">${inp.tags.unit || '—'}</strong>`;
+}
+
+// REGISTER WORD
+let pendingDup = null;
+
+function registerWord() {
+  const word = document.getElementById('inp-word').value.trim();
+  const meaning = document.getElementById('inp-meaning').value.trim();
+  if (!word || !meaning) { showToast('単語と意味を入力してください'); return; }
+  const existing = DB.words.find(w => w.word.toLowerCase() === word.toLowerCase());
+  if (existing) {
+    pendingDup = { existing, word, meaning };
+    document.getElementById('modal-dup-body').innerHTML =
+      `「${existing.word}」はすでに登録済みです。<br>既存の意味: <strong>${existing.meaning}</strong><br>新しい意味: <strong>${meaning}</strong>`;
+    openModal('modal-dup');
+    return;
+  }
+  doAddWord(word, meaning);
+}
+
+function doAddWord(word, meaning) {
+  DB.words.push({
+    id: Date.now() + Math.random(),
+    subject: inp.subject,
+    tags: { unit: inp.tags.unit },
+    word, meaning,
+    createdAt: new Date().toISOString()
+  });
+  saveDB();
+  document.getElementById('inp-word').value = '';
+  document.getElementById('inp-meaning').value = '';
+  document.getElementById('word-count').textContent = DB.words.length;
+  showToast('登録しました ✓');
+}
+
+function dupAction(action) {
+  if (!pendingDup) return;
+  if (action === 'merge') {
+    const w = DB.words.find(x => x.id === pendingDup.existing.id);
+    if (w) w.meaning += ' / ' + pendingDup.meaning;
+    saveDB();
+    document.getElementById('inp-word').value = '';
+    document.getElementById('inp-meaning').value = '';
+    showToast('意味を統合しました');
+  } else {
+    doAddWord(pendingDup.word, pendingDup.meaning);
+  }
+  pendingDup = null;
+  closeModal('modal-dup');
+}
+
+// ===================== QUIZ =====================
+let quizSettings = { scope: 'all', selectedSubjects: [], selectedTags: [], count: 10, mode: 'meaning_to_word' };
+let quizState = { questions: [], current: 0, answers: [], elapsed: 0, answered: null, timer: null };
+
+function renderQuizScopeOptions() {
+  const subEl = document.getElementById('scope-subject');
+  subEl.innerHTML = DB.subjects.map(s => {
+    const cnt = DB.words.filter(w => w.subject === s).length;
+    const sel = quizSettings.selectedSubjects.includes(s);
+    return `<label class="range-item ${sel ? 'selected' : ''}" onclick="toggleQuizSubject('${escQ(s)}')">
+      <input type="checkbox" ${sel ? 'checked' : ''}>${s}
+      <span style="font-size:10px;opacity:.7">(${cnt})</span>
+    </label>`;
+  }).join('');
+
+  // collect all unique unit tags
+  const allUnits = [...new Set(DB.words.map(w => w.tags?.unit).filter(Boolean))];
+  const tagEl = document.getElementById('scope-tag');
+  tagEl.innerHTML = allUnits.map(t => {
+    const cnt = DB.words.filter(w => w.tags?.unit === t).length;
+    const sel = quizSettings.selectedTags.includes(t);
+    return `<label class="range-item ${sel ? 'selected' : ''}" onclick="toggleQuizTag('${escQ(t)}')">
+      <input type="checkbox" ${sel ? 'checked' : ''}>${t}
+      <span style="font-size:10px;opacity:.7">(${cnt})</span>
+    </label>`;
+  }).join('') || '<span style="font-size:12px;color:var(--text-sub)">単元タグが登録されていません</span>';
+
+  // update pool count preview
+  const pool = getQuizPool();
+  document.getElementById('quiz-pool-count').textContent = `対象: ${pool.length}単語`;
+}
+
+function setScope(s) {
+  quizSettings.scope = s;
+  document.querySelectorAll('#scope-chips .chip').forEach(c => c.classList.toggle('selected', c.dataset.scope === s));
+  document.getElementById('scope-subject').style.display = s === 'subject' ? 'flex' : 'none';
+  document.getElementById('scope-tag').style.display = s === 'tag' ? 'flex' : 'none';
+  renderQuizScopeOptions();
+}
+
+function toggleQuizSubject(s) {
+  const i = quizSettings.selectedSubjects.indexOf(s);
+  if (i >= 0) quizSettings.selectedSubjects.splice(i, 1); else quizSettings.selectedSubjects.push(s);
+  renderQuizScopeOptions();
+}
+function toggleQuizTag(t) {
+  const i = quizSettings.selectedTags.indexOf(t);
+  if (i >= 0) quizSettings.selectedTags.splice(i, 1); else quizSettings.selectedTags.push(t);
+  renderQuizScopeOptions();
+}
+
+function setCount(n) {
+  quizSettings.count = n;
+  document.querySelectorAll('#count-chips .chip').forEach(c => c.classList.toggle('selected', +c.dataset.count === n));
+}
+
+function setMode(m) {
+  quizSettings.mode = m;
+  document.querySelectorAll('#mode-chips .chip').forEach(c => c.classList.toggle('selected', c.dataset.mode === m));
+}
+
+function getQuizPool() {
+  const { scope, selectedSubjects, selectedTags } = quizSettings;
+  if (scope === 'subject' && selectedSubjects.length > 0)
+    return DB.words.filter(w => selectedSubjects.includes(w.subject));
+  if (scope === 'tag' && selectedTags.length > 0)
+    return DB.words.filter(w => selectedTags.includes(w.tags?.unit));
+  return DB.words;
+}
+
+function shuffle(a) {
+  a = [...a];
+  for (let i = a.length-1; i > 0; i--) { const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+  return a;
+}
+
+function startQuiz() {
+  const pool = getQuizPool();
+  if (pool.length < 4) { alert('この範囲の単語が4つ以上必要です'); return; }
+  const count = Math.min(quizSettings.count, pool.length);
+  const qs = shuffle(pool).slice(0, count).map(w => {
+    const m = quizSettings.mode === 'mixed' ? (Math.random() > 0.5 ? 'meaning_to_word' : 'word_to_meaning') : quizSettings.mode;
+    const isM2W = m === 'meaning_to_word';
+    const question = isM2W ? w.meaning : w.word;
+    const answer = isM2W ? w.word : w.meaning;
+    const others = shuffle(pool.filter(x => x.id !== w.id)).slice(0,3).map(x => isM2W ? x.word : x.meaning);
+    while (others.length < 3) others.push('（選択肢なし）');
+    return { question, answer, choices: shuffle([answer, ...others]), mode: m };
+  });
+  quizState = { questions: qs, current: 0, answers: [], elapsed: 0, answered: null, timer: null };
+  document.getElementById('quiz-setup').style.display = 'none';
+  document.getElementById('quiz-result').style.display = 'none';
+  document.getElementById('quiz-playing').style.display = 'block';
+  renderQuestion();
+}
+
+function renderQuestion() {
+  clearInterval(quizState.timer);
+  quizState.elapsed = 0;
+  quizState.answered = null;
+  const q = quizState.questions[quizState.current];
+  const total = quizState.questions.length;
+  const circ = 2 * Math.PI * 24;
+
+  document.getElementById('q-progress').style.width = (quizState.current / total * 100) + '%';
+  document.getElementById('q-count').textContent = (quizState.current + 1) + '/' + total;
+  document.getElementById('q-mode-badge').textContent = q.mode === 'meaning_to_word' ? '意味 → 単語' : '単語 → 意味';
+  document.getElementById('q-question').textContent = q.question;
+  document.getElementById('q-answer-info').style.display = 'none';
+  document.getElementById('q-answer-info').innerHTML = '';
+
+  const ring = document.getElementById('ring-fill');
+  ring.style.stroke = 'var(--blue)';
+  ring.setAttribute('stroke-dasharray', circ);
+
+  const choicesEl = document.getElementById('q-choices');
+  choicesEl.innerHTML = q.choices.map((c,i) =>
+    `<button class="choice-btn" onclick="answerQuiz(${i})">${c}</button>`
+  ).join('');
+
+  quizState.timer = setInterval(() => {
+    quizState.elapsed = +(quizState.elapsed + 0.1).toFixed(1);
+    const left = Math.max(0, 10 - quizState.elapsed);
+    document.getElementById('timer-text').textContent = Math.ceil(left);
+    const pct = left / 10;
+    ring.setAttribute('stroke-dashoffset', circ * (1 - pct));
+    ring.style.stroke = quizState.elapsed > 7 ? '#c0392b' : quizState.elapsed > 4 ? '#e67e22' : 'var(--blue)';
+    if (quizState.elapsed >= 10) {
+      clearInterval(quizState.timer);
+      processAnswer(null, 10.1);
+    }
+  }, 100);
+}
+
+function answerQuiz(idx) {
+  if (quizState.answered !== null) return;
+  clearInterval(quizState.timer);
+  processAnswer(idx, quizState.elapsed);
+}
+
+function processAnswer(idx, t) {
+  if (quizState.answered !== null) return;
+  const q = quizState.questions[quizState.current];
+  const chosen = idx !== null ? q.choices[idx] : null;
+  const correct = chosen === q.answer;
+  quizState.answered = idx;
+
+  let scoreMultiplier = 0;
+  if (correct) {
+    if (t <= 2) scoreMultiplier = 1;
+    else if (t <= 5) scoreMultiplier = 0.9;
+    else if (t <= 10) scoreMultiplier = 0.8;
+  }
+
+  const btns = document.querySelectorAll('.choice-btn');
+  btns.forEach((b, i) => {
+    b.disabled = true;
+    if (q.choices[i] === q.answer) b.classList.add('correct');
+    else if (i === idx) b.classList.add('wrong');
+  });
+
+  showAnswerFeedback(correct, q, chosen);
+
+  quizState.answers.push({ question: q.question, answer: q.answer, chosen, correct, time: t, scoreMultiplier, mode: q.mode });
+
+  setTimeout(() => {
+    if (quizState.current + 1 >= quizState.questions.length) showResult();
+    else { quizState.current++; renderQuestion(); }
+  }, 1500);
+}
+
+function showAnswerFeedback(correct, q, chosen) {
+  const overlay  = document.getElementById('answer-overlay');
+  const wrap     = document.getElementById('answer-mark-wrap');
+  const svgWrap  = document.getElementById('answer-mark-svg-wrap');
+  const sub      = document.getElementById('answer-sub');
+  const infoEl   = document.getElementById('q-answer-info');
+
+  // reset overlay
+  overlay.className = 'answer-overlay';
+  wrap.style.transform = 'scale(0.3)';
+  wrap.style.opacity = '0';
+
+  // --- determine word / meaning pairs ---
+  // q.mode: 'meaning_to_word' => question=meaning, answer=word
+  //         'word_to_meaning' => question=word,    answer=meaning
+  const isM2W = q.mode === 'meaning_to_word';
+  const correctWord    = isM2W ? q.answer   : q.question;
+  const correctMeaning = isM2W ? q.question : q.answer;
+  const chosenWord     = chosen ? (isM2W ? chosen     : q.question) : null;
+  const chosenMeaning  = chosen ? (isM2W ? q.question : chosen)     : null;
+
+  // --- SVG mark ---
+  if (correct) {
+    overlay.classList.add('correct-bg');
+    svgWrap.innerHTML = `
+      <svg class="answer-mark-svg" viewBox="0 0 140 140" fill="none">
+        <circle cx="70" cy="70" r="58" stroke="#1a7a4a" stroke-width="10" fill="rgba(26,122,74,0.08)"/>
+      </svg>`;
+    sub.style.color = '#1a7a4a';
+    sub.textContent = '正解！';
+  } else {
+    overlay.classList.add('wrong-bg');
+    svgWrap.innerHTML = `
+      <svg class="answer-mark-svg" viewBox="0 0 140 140" fill="none">
+        <circle cx="70" cy="70" r="58" fill="rgba(192,57,43,0.08)"/>
+        <line x1="38" y1="38" x2="102" y2="102" stroke="#c0392b" stroke-width="10" stroke-linecap="round"/>
+        <line x1="102" y1="38" x2="38" y2="102" stroke="#c0392b" stroke-width="10" stroke-linecap="round"/>
+      </svg>`;
+    sub.style.color = '#c0392b';
+    sub.textContent = '不正解…';
+  }
+
+  // --- answer info cards ---
+  let html = '';
+
+  // 正解カード（常に表示）
+  html += `
+    <div class="answer-info correct-card">
+      <div class="answer-info-label">✓ 正解</div>
+      <div class="answer-info-word">${correctWord}</div>
+      <div class="answer-info-meaning">${correctMeaning}</div>
+    </div>`;
+
+  // 誤答カード（不正解かつ選択肢あり）
+  if (!correct && chosen) {
+    // DBから選んだ選択肢の実際の意味を引く
+    const isM2W = q.mode === 'meaning_to_word';
+    let chosenActualWord, chosenActualMeaning;
+    if (isM2W) {
+      // chosen = 単語 → DBからその単語の意味を探す
+      chosenActualWord = chosen;
+      const found = DB.words.find(w => w.word === chosen);
+      chosenActualMeaning = found ? found.meaning : '—';
+    } else {
+      // chosen = 意味 → DBからその意味の単語を探す
+      chosenActualMeaning = chosen;
+      const found = DB.words.find(w => w.meaning === chosen);
+      chosenActualWord = found ? found.word : '—';
+    }
+    html += `
+      <div class="answer-info wrong-card">
+        <div class="answer-info-label">✗ あなたの回答</div>
+        <div class="answer-info-word">${chosenActualWord}</div>
+        <div class="answer-info-meaning">${chosenActualMeaning}</div>
+      </div>`;
+  } else if (!correct && !chosen) {
+    html += `
+      <div class="answer-info wrong-card">
+        <div class="answer-info-label">✗ 時間切れ</div>
+        <div class="answer-info-word" style="color:var(--text-sub);font-size:14px">回答なし</div>
+      </div>`;
+  }
+
+  infoEl.innerHTML = html;
+  infoEl.style.display = 'block';
+
+  // --- animate overlay ---
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    overlay.classList.add('show');
+    wrap.style.transition = 'transform .3s cubic-bezier(.17,.67,.35,1.5), opacity .2s';
+    wrap.style.transform = 'scale(1)';
+    wrap.style.opacity = '1';
+  }));
+
+  setTimeout(() => { overlay.classList.remove('show'); }, 1300);
+}
+
+function showResult() {
+  document.getElementById('quiz-playing').style.display = 'none';
+  const list = quizState.answers;
+  const base = 100 / list.length;
+  const score = Math.round(list.reduce((s, a) => s + base * a.scoreMultiplier, 0));
+  const correct = list.filter(a => a.correct).length;
+
+  document.getElementById('r-score').textContent = score;
+  document.getElementById('r-correct').textContent = `正解 ${correct}/${list.length}問`;
+  document.getElementById('r-list').innerHTML = list.map(a =>
+    `<div class="result-item">
+      <div style="font-size:16px;flex-shrink:0">${a.correct ? '✅' : '❌'}</div>
+      <div>
+        <div style="font-weight:600;color:var(--blue-deep);font-size:13px">${a.question}</div>
+        <div style="font-size:12px;color:var(--text-sub)">
+          正解: ${a.answer}
+          ${!a.correct && a.chosen ? `<span style="color:var(--danger)"> ／ 選択: ${a.chosen}</span>` : ''}
+          <span style="margin-left:6px">(${a.time.toFixed(1)}秒)</span>
+        </div>
+      </div>
+    </div>`
+  ).join('');
+  document.getElementById('quiz-result').style.display = 'block';
+}
+
+function resetQuiz() {
+  document.getElementById('quiz-result').style.display = 'none';
+  document.getElementById('quiz-setup').style.display = 'block';
+  // restore scope panel visibility
+  document.getElementById('scope-subject').style.display = quizSettings.scope === 'subject' ? 'flex' : 'none';
+  document.getElementById('scope-tag').style.display = quizSettings.scope === 'tag' ? 'flex' : 'none';
+  renderQuizScopeOptions();
+}
+
+// ===================== DICT =====================
+let dictMode = 'list';
+
+function setDictMode(m) {
+  dictMode = m;
+  document.querySelectorAll('#page-dict .chip').forEach((c, i) => {
+    c.classList.toggle('selected', ['list','word','meaning'][i] === m);
+  });
+  document.getElementById('dict-search-wrap').style.display = (m === 'word' || m === 'meaning') ? 'block' : 'none';
+  document.getElementById('dict-filter-wrap').style.display = m === 'list' ? 'block' : 'none';
+  document.getElementById('dict-search-input').value = '';
+  document.getElementById('dict-search-input').placeholder = m === 'word' ? '単語を検索…' : '意味を検索…';
+  renderDictList();
+}
+
+function similarity(a, b) {
+  a = a.toLowerCase(); b = b.toLowerCase();
+  if (b.includes(a)) return 100;
+  let m = 0;
+  for (let i = 0; i < a.length; i++) if (b.includes(a[i])) m++;
+  return Math.round(m / Math.max(a.length, b.length) * 100);
+}
+
+function renderDictFilters() {
+  const subj = document.getElementById('dict-filter-subject');
+  const allSubjects = ['すべて', ...DB.subjects];
+  subj.innerHTML = allSubjects.map(s => `<option value="${s}">${s}</option>`).join('');
+  const allTags = ['すべて', ...new Set(DB.words.flatMap(w => Object.values(w.tags||{}).filter(Boolean)))];
+  document.getElementById('dict-filter-tag').innerHTML = allTags.map(t => `<option value="${t}">${t}</option>`).join('');
+}
+
+function renderDictList() {
+  const query = document.getElementById('dict-search-input').value.trim();
+  const fSubj = document.getElementById('dict-filter-subject').value;
+  const fTag = document.getElementById('dict-filter-tag').value;
+  let list = [...DB.words];
+  if (fSubj && fSubj !== 'すべて') list = list.filter(w => w.subject === fSubj);
+  if (fTag && fTag !== 'すべて') list = list.filter(w => Object.values(w.tags||{}).includes(fTag));
+  if (dictMode === 'word' && query) {
+    list = list.map(w => ({ ...w, sim: similarity(query, w.word) })).filter(w => w.sim >= 80)
+      .sort((a, b) => {
+        if (b.sim !== a.sim) return b.sim - a.sim;
+        const da = Math.abs(a.word.length - query.length), db = Math.abs(b.word.length - query.length);
+        if (da !== db) return da - db;
+        return (a.word.length < query.length ? 0 : 1) - (b.word.length < query.length ? 0 : 1);
+      });
+  }
+  if (dictMode === 'meaning' && query) list = list.filter(w => w.meaning.includes(query));
+  document.getElementById('dict-count').textContent = list.length + ' 件';
+  const el = document.getElementById('dict-list');
+  if (list.length === 0) {
+    el.innerHTML = '<div class="empty"><div class="empty-icon">📖</div>単語が見つかりません</div>';
+    return;
+  }
+  el.innerHTML = list.map(w =>
+    `<div class="dict-item">
+      <div style="flex:1">
+        <div class="dict-word">${w.word}</div>
+        <div class="dict-meaning">${w.meaning}</div>
+        <div class="dict-tags">
+          <span class="dict-tag">${w.subject}</span>
+          ${Object.values(w.tags||{}).filter(Boolean).map(t => `<span class="dict-tag">${t}</span>`).join('')}
+        </div>
+      </div>
+      <button class="btn btn-danger btn-sm" style="margin-left:8px;padding:6px 10px" onclick="askDelete(${w.id})">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"/></svg>
+      </button>
+    </div>`
+  ).join('');
+}
+
+let pendingDeleteId = null;
+function askDelete(id) {
+  pendingDeleteId = id;
+  const w = DB.words.find(x => x.id === id);
+  document.getElementById('modal-del-body').innerHTML = `「${w?.word}」を削除しますか？<br>この操作は元に戻せません。`;
+  openModal('modal-del');
+}
+function confirmDelete() {
+  DB.words = DB.words.filter(w => w.id !== pendingDeleteId);
+  saveDB();
+  pendingDeleteId = null;
+  closeModal('modal-del');
+  renderDictFilters();
+  renderDictList();
+  showToast('削除しました');
+}
+
+// ===================== EXPORT / IMPORT =====================
+function renderExportPage() {
+  document.getElementById('export-count').textContent = DB.words.length;
+  const preview = JSON.stringify(DB.words.slice(0, 2), null, 2) + (DB.words.length > 2 ? '\n...' : '');
+  document.getElementById('export-preview').textContent = preview || '（データなし）';
+}
+
+function exportData() {
+  if (!DB.words.length) return;
+  const blob = new Blob([JSON.stringify(DB.words, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'vocab_' + new Date().toISOString().slice(0, 10) + '.json';
+  a.click(); URL.revokeObjectURL(url);
+  showToast('エクスポートしました');
+}
+
+function importFromFile(input) {
+  const file = input.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const arr = JSON.parse(e.target.result);
+      if (!Array.isArray(arr)) throw new Error('not array');
+      doImport(arr);
+    } catch(err) {
+      showToast('ファイルの形式が正しくありません');
+    }
+    input.value = '';
+  };
+  reader.onerror = () => { showToast('ファイルの読み込みに失敗しました'); input.value = ''; };
+  reader.readAsText(file, 'UTF-8');
+}
+
+function importFromText() {
+  const txt = document.getElementById('import-text').value.trim();
+  try {
+    const arr = JSON.parse(txt);
+    if (!Array.isArray(arr)) throw new Error();
+    doImport(arr);
+    document.getElementById('import-text').value = '';
+  } catch { showToast('JSONの形式が正しくありません'); }
+}
+
+function doImport(arr) {
+  const ids = new Set(DB.words.map(w => w.id));
+  const added = arr.filter(w => !ids.has(w.id));
+  DB.words.push(...added);
+  saveDB();
+  showToast(`${added.length}件インポートしました`);
+  renderExportPage();
+}
+
+// ===================== INIT =====================
+renderInputPage();
+renderQuizScopeOptions();
+</script>
+</body>
+</html>
