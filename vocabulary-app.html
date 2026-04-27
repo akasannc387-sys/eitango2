@@ -94,7 +94,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text
 .dict-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
 .dict-tag{font-size:10px;padding:2px 7px;border-radius:10px;background:var(--blue-light);color:var(--blue)}
 /* MODAL */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;display:none}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
 .modal-overlay.open{display:flex}
 .modal{background:var(--white);border-radius:16px;padding:24px 20px;width:100%;max-width:360px;box-shadow:0 10px 40px rgba(0,0,0,.15)}
 .modal-title{font-size:16px;font-weight:700;color:var(--blue-deep);margin-bottom:8px}
@@ -230,7 +230,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--text
 
       <!-- Tag settings per subject -->
       <div class="card">
-        <div class="card-title">タグ設定 <span id="tag-subject-label" style="font-size:11px;font-weight:400;color:var(--text-sub)"></span></div>
+        <div class="card-title">タグ設定</div>
         <div class="subj-tabs" id="tag-subj-tabs"></div>
 
         <!-- unit -->
@@ -843,14 +843,9 @@ function showAnswerFeedback(correct, q, chosen) {
   wrap.style.transform = 'scale(0.3)';
   wrap.style.opacity = '0';
 
-  // --- determine word / meaning pairs ---
-  // q.mode: 'meaning_to_word' => question=meaning, answer=word
-  //         'word_to_meaning' => question=word,    answer=meaning
   const isM2W = q.mode === 'meaning_to_word';
   const correctWord    = isM2W ? q.answer   : q.question;
   const correctMeaning = isM2W ? q.question : q.answer;
-  const chosenWord     = chosen ? (isM2W ? chosen     : q.question) : null;
-  const chosenMeaning  = chosen ? (isM2W ? q.question : chosen)     : null;
 
   // --- SVG mark ---
   if (correct) {
@@ -886,16 +881,12 @@ function showAnswerFeedback(correct, q, chosen) {
 
   // 誤答カード（不正解かつ選択肢あり）
   if (!correct && chosen) {
-    // DBから選んだ選択肢の実際の意味を引く
-    const isM2W = q.mode === 'meaning_to_word';
     let chosenActualWord, chosenActualMeaning;
     if (isM2W) {
-      // chosen = 単語 → DBからその単語の意味を探す
       chosenActualWord = chosen;
       const found = DB.words.find(w => w.word === chosen);
       chosenActualMeaning = found ? found.meaning : '—';
     } else {
-      // chosen = 意味 → DBからその意味の単語を探す
       chosenActualMeaning = chosen;
       const found = DB.words.find(w => w.meaning === chosen);
       chosenActualWord = found ? found.word : '—';
